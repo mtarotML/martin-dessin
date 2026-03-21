@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Martin dessin</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <header class="top-bar">
+    <div class="top-bar-brand">
+      <i data-lucide="pen-line" class="lucide-brand" aria-hidden="true"></i>
+      <h1>Martin dessin</h1>
+    </div>
+    <div class="user-info">
+      <i data-lucide="user-circle" class="lucide-user-avatar" aria-hidden="true"></i>
+      <span id="username-display"></span>
+      <button id="logout-btn" class="btn-small btn-with-icon" type="button">
+        <i data-lucide="log-out" aria-hidden="true"></i>
+        <span>Déconnexion</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="main-layout">
+    <aside class="top-liked" aria-label="Image la plus aimée">
+      <div class="top-liked-header">
+        <i data-lucide="trophy" class="top-liked-icon" aria-hidden="true"></i>
+        <h3>Plus aimé</h3>
+      </div>
+
+      <div class="top-liked-image-frame">
+        <img id="top-liked-image" alt="Dessin le plus aimé" />
+      </div>
+
+      <div class="top-liked-meta">
+        <i data-lucide="heart" class="top-liked-like-icon" aria-hidden="true"></i>
+        <span id="top-liked-like-count">0</span>
+      </div>
+    </aside>
+
+    <div class="main-left">
+      <div class="canvas-top-row">
+        <div class="canvas-tools">
+          <div class="tool-colors">
+            <button class="color-dot active" data-color="#000000" style="background:#000000" type="button"></button>
+            <button class="color-dot" data-color="#e74c3c" style="background:#e74c3c" type="button"></button>
+            <button class="color-dot" data-color="#3498db" style="background:#3498db" type="button"></button>
+            <button class="color-dot" data-color="#2ecc71" style="background:#2ecc71" type="button"></button>
+            <button class="color-dot" data-color="#f39c12" style="background:#f39c12" type="button"></button>
+            <button class="color-dot" data-color="#9b59b6" style="background:#9b59b6" type="button"></button>
+          </div>
+          <div class="tool-sizes">
+            <button class="size-dot" data-size="2" type="button"><span style="width:4px;height:4px"></span></button>
+            <button class="size-dot active" data-size="4" type="button"><span style="width:8px;height:8px"></span></button>
+            <button class="size-dot" data-size="8" type="button"><span style="width:12px;height:12px"></span></button>
+          </div>
+        </div>
+        <div class="canvas-container">
+          <canvas id="canvas" width="250" height="250"></canvas>
+        </div>
+      </div>
+
+      <div class="buttons">
+        <button id="clear" type="button" class="btn-with-icon">
+          <i data-lucide="eraser" aria-hidden="true"></i>
+          <span>Effacer</span>
+        </button>
+        <button id="send" type="button" class="btn-with-icon btn-primary-outline">
+          <i data-lucide="send" aria-hidden="true"></i>
+          <span>Envoyer</span>
+        </button>
+      </div>
+
+      <h2 class="section-title">
+        <i data-lucide="images" class="lucide-section" aria-hidden="true"></i>
+        Bibliothèque
+      </h2>
+      <div id="gallery" class="gallery"></div>
+    </div>
+
+    <aside class="leaderboard" aria-label="Leaderboard">
+      <div class="leaderboard-header">
+        <i data-lucide="trophy" class="leaderboard-icon" aria-hidden="true"></i>
+        <h3>Leaderboard</h3>
+      </div>
+
+      <ol id="leaderboard-list" class="leaderboard-list"></ol>
+    </aside>
+  </div>
+
+  <!-- Detail modal -->
+  <div id="detail-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <button class="modal-close" id="modal-close" type="button" aria-label="Fermer">
+        <i data-lucide="x" aria-hidden="true"></i>
+      </button>
+
+      <div class="detail-image-wrap">
+        <img id="detail-image" />
+        <span id="detail-heart-count" class="heart-badge">
+          <i data-lucide="heart" class="heart-icon" aria-hidden="true"></i>
+          <span id="detail-heart-num" class="heart-num">0</span>
+        </span>
+      </div>
+
+      <p class="detail-author" id="detail-author"></p>
+
+      <button id="like-btn" class="like-btn btn-with-icon" type="button">
+        <i data-lucide="heart" aria-hidden="true"></i>
+        <span id="like-label">J'aime</span>
+      </button>
+
+      <div class="comments-section">
+        <h3>Commentaires</h3>
+        <div id="comments-list"></div>
+        <form id="comment-form">
+          <input type="text" id="comment-input" placeholder="Ajouter un commentaire..." maxlength="500" required>
+          <button type="submit" class="btn-with-icon">
+            <i data-lucide="corner-down-left" aria-hidden="true"></i>
+            <span>Envoyer</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+  <script src="/static/script.js"></script>
+  <script>
+    if (typeof lucide !== "undefined") lucide.createIcons();
+  </script>
+</body>
+</html>

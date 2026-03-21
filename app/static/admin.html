@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin – Bibliothèque</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="admin-page-body">
+  <header class="admin-header">
+    <div class="admin-header-title">
+      <i data-lucide="shield" class="lucide-admin" aria-hidden="true"></i>
+      <h1>Admin – Bibliothèque</h1>
+    </div>
+  </header>
+
+  <div class="admin-toolbar">
+    <button id="delete" type="button" class="btn-with-icon btn-danger-outline">
+      <i data-lucide="trash-2" aria-hidden="true"></i>
+      <span>Supprimer sélection</span>
+    </button>
+    <button id="delete-all" type="button" class="btn-with-icon btn-danger">
+      <i data-lucide="trash" aria-hidden="true"></i>
+      <span>Tout supprimer</span>
+    </button>
+  </div>
+
+  <div id="gallery" class="gallery admin-gallery"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+  <script src="/static/admin.js"></script>
+  <script>
+    if (typeof lucide !== "undefined") lucide.createIcons();
+  </script>
+</div>
+</body>
+</html>
