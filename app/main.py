@@ -169,7 +169,7 @@ def get_leaderboard():
                     u.id,
                     u.username,
                     (SELECT COUNT(*) FROM drawings d WHERE d.user_id = u.id) AS drawing_count,
-                    (SELECT COUNT(*) FROM reactions r WHERE r.user_id = u.id AND r.emoji = 'like') AS like_count
+                    (SELECT COUNT(*) FROM reactions r JOIN drawings d ON d.id = r.drawing_id WHERE d.user_id = u.id AND r.emoji = 'like') AS like_count
                 FROM users u
                 ORDER BY like_count DESC, drawing_count DESC
                 LIMIT 5
