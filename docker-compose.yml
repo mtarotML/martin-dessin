@@ -1,9 +1,55 @@
+# Même fichier pour local et serveur : réglez COMPOSE_PROFILES dans .env
+#
+# Développement (sans Nginx) :
+#   COMPOSE_PROFILES=local
+#   → services web_local + db_local (ports sur 127.0.0.1)
+#
+# Serveur (reverse proxy) :
+#   COMPOSE_PROFILES=proxy
+#   RESTART_POLICY=always   (recommandé)
+#   → services web + db (pas de ports exposés sur l’hôte) + nginx sur 80/443
+#
+# Ne pas activer local et proxy en même temps.
+
+x-db-base: &db-base
+  image: postgres:15-alpine
+  restart: ${RESTART_POLICY:-no}
+  environment:
+    POSTGRES_USER: ${POSTGRES_USER}
+    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    POSTGRES_DB: ${POSTGRES_DB}
+  volumes:
+    - pgdata:/var/lib/postgresql/data
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+    interval: 10s
+    timeout: 5s
+    retries: 5
+    start_period: 10s
+  networks:
+    - back-network
+
+x-web-base: &web-base
+  build: .
+  image: website
+  restart: ${RESTART_POLICY:-no}
+  networks:
+    - back-network
+
 services:
-  web:
-    build: .
-    image: website
+  db:
+    <<: *db-base
+    profiles: [proxy]
+
+  db_local:
+    <<: *db-base
+    profiles: [local]
     ports:
-      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+
+  web:
+    <<: *web-base
+    profiles: [proxy]
     environment:
       ADMIN_TOKEN: ${ADMIN_TOKEN}
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
@@ -11,22 +57,35 @@ services:
       db:
         condition: service_healthy
 
-  db:
-    image: postgres:15
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+  web_local:
+    <<: *web-base
+    profiles: [local]
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:${WEB_PORT:-8000}:8000"
+    environment:
+      ADMIN_TOKEN: ${ADMIN_TOKEN}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db_local:5432/${POSTGRES_DB}
+    depends_on:
+      db_local:
+        condition: service_healthy
+
+  nginx:
+    image: nginx:alpine
+    restart: ${RESTART_POLICY:-no}
+    profiles: [proxy]
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
     volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 5s
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - web
+    networks:
+      - back-network
 
 volumes:
   pgdata:
+
+networks:
+  back-network:
+    driver: bridge
