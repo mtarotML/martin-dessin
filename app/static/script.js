@@ -47,10 +47,10 @@ function refreshLucide() {
 // ==================== Auth gate ====================
 
 async function checkAuth() {
-  const res = await fetch("/auth/me");
+  const res = await fetch("/martin-dessin/auth/me");
   const data = await res.json();
   if (!data.user) {
-    window.location.href = "/auth";
+    window.location.href = "/martin-dessin/auth";
     return;
   }
   currentUser = data.user;
@@ -58,8 +58,8 @@ async function checkAuth() {
 }
 
 document.getElementById("logout-btn").onclick = async () => {
-  await fetch("/auth/logout", { method: "POST" });
-  window.location.href = "/auth";
+  await fetch("/martin-dessin/auth/logout", { method: "POST" });
+  window.location.href = "/martin-dessin/auth";
 };
 
 // ==================== Canvas drawing ====================
@@ -126,7 +126,7 @@ document.getElementById("send").onclick = async () => {
     return;
   }
   const image = canvas.toDataURL("image/png");
-  await fetch("/drawings", {
+  await fetch("/martin-dessin/drawings", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ image }),
@@ -141,19 +141,19 @@ document.getElementById("send").onclick = async () => {
 // ==================== Gallery ====================
 
 async function loadGallery() {
-  const res = await fetch("/drawings");
+  const res = await fetch("/martin-dessin/drawings");
   const data = await res.json();
   renderGallery(data.drawings);
 }
 
 async function loadLeaderboard() {
-  const res = await fetch("/leaderboard");
+  const res = await fetch("/martin-dessin/leaderboard");
   const data = await res.json();
   renderLeaderboard(data.leaderboard || []);
 }
 
 async function loadTopLiked() {
-  const res = await fetch("/top-liked");
+  const res = await fetch("/martin-dessin/top-liked");
   const data = await res.json();
   const top = data.top;
 
@@ -279,7 +279,7 @@ function renderLeaderboard(entries) {
 
 async function openDetail(drawingId) {
   currentDrawingId = drawingId;
-  const res = await fetch(`/drawings/${drawingId}`);
+  const res = await fetch(`/martin-dessin/drawings/${drawingId}`);
   const data = await res.json();
 
   detailImage.src = data.drawing.image;
@@ -316,14 +316,14 @@ async function toggleLike() {
   const userLiked = likeBtn.dataset.liked === "true";
 
   if (userLiked) {
-    await fetch(`/drawings/${currentDrawingId}/reaction`, { method: "DELETE" });
+    await fetch(`/martin-dessin/drawings/${currentDrawingId}/reaction`, { method: "DELETE" });
   } else {
-    await fetch(`/drawings/${currentDrawingId}/reaction`, {
+    await fetch(`/martin-dessin/drawings/${currentDrawingId}/reaction`, {
       method: "POST",
     });
   }
 
-  const res = await fetch(`/drawings/${currentDrawingId}`);
+  const res = await fetch(`/martin-dessin/drawings/${currentDrawingId}`);
   const data = await res.json();
   detailHeartNum.textContent = data.heart_count || 0;
   renderLike(data.user_liked);
@@ -361,14 +361,14 @@ commentForm.onsubmit = async (e) => {
   const content = commentInput.value.trim();
   if (!content || !currentDrawingId) return;
 
-  await fetch(`/drawings/${currentDrawingId}/comments`, {
+  await fetch(`/martin-dessin/drawings/${currentDrawingId}/comments`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ content }),
   });
   commentInput.value = "";
 
-  const res = await fetch(`/drawings/${currentDrawingId}`);
+  const res = await fetch(`/martin-dessin/drawings/${currentDrawingId}`);
   const data = await res.json();
   renderComments(data.comments);
 };

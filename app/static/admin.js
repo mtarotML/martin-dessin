@@ -4,7 +4,7 @@ let selectedIds = new Set();
 
 
 async function loadDrawings() {
-  const res = await fetch("/admin/drawings", {
+  const res = await fetch("/martin-dessin/admin/drawings", {
     headers: { "X-Admin-Token": ADMIN_TOKEN }
   });
 
@@ -49,7 +49,7 @@ function render(drawings) {
 document.getElementById("delete").onclick = async () => {
   if (selectedIds.size === 0) return;
 
-  await fetch("/admin/drawings", {
+  await fetch("/martin-dessin/admin/drawings", {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
@@ -64,7 +64,7 @@ document.getElementById("delete").onclick = async () => {
 document.getElementById("delete-all").onclick = async () => {
   if (!confirm("⚠️ Supprimer TOUS les dessins ?")) return;
 
-  await fetch("/admin/drawings/all", {
+  await fetch("/martin-dessin/admin/drawings/all", {
     method: "DELETE",
     headers: {
       "X-Admin-Token": ADMIN_TOKEN

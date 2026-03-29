@@ -6,8 +6,8 @@ const loginError = document.getElementById("login-error");
 const registerError = document.getElementById("register-error");
 
 // Redirect if already logged in
-fetch("/auth/me").then(r => r.json()).then(d => {
-  if (d.user) window.location.href = "/";
+fetch("/martin-dessin/auth/me").then(r => r.json()).then(d => {
+  if (d.user) window.location.href = "/martin-dessin/";
 });
 
 tabLogin.onclick = () => {
@@ -28,7 +28,7 @@ loginForm.onsubmit = async (e) => {
   e.preventDefault();
   loginError.textContent = "";
   const fd = new FormData(loginForm);
-  const res = await fetch("/auth/login", {
+  const res = await fetch("/martin-dessin/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -41,14 +41,14 @@ loginForm.onsubmit = async (e) => {
     loginError.textContent = data.error || "Erreur";
     return;
   }
-  window.location.href = "/";
+  window.location.href = "/martin-dessin/";
 };
 
 registerForm.onsubmit = async (e) => {
   e.preventDefault();
   registerError.textContent = "";
   const fd = new FormData(registerForm);
-  const res = await fetch("/auth/register", {
+  const res = await fetch("/martin-dessin/auth/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -62,5 +62,5 @@ registerForm.onsubmit = async (e) => {
     registerError.textContent = data.error || "Erreur";
     return;
   }
-  window.location.href = "/";
+  window.location.href = "/martin-dessin/";
 };
