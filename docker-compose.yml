@@ -1,91 +1,46 @@
-# Même fichier pour local et serveur : réglez COMPOSE_PROFILES dans .env
+# Local  : docker compose up --build           → db + web (localhost:8000)
+# Serveur: COMPOSE_PROFILES=proxy dans .env   → db + web + nginx (80/443)
 #
-# Développement (sans Nginx) :
-#   COMPOSE_PROFILES=local
-#   → services web_local + db_local (ports sur 127.0.0.1)
-#
-# Serveur (reverse proxy) :
-#   COMPOSE_PROFILES=proxy
-#   RESTART_POLICY=always   (recommandé)
-#   → services web + db (pas de ports exposés sur l’hôte) + nginx sur 80/443
-#
-# Certificat Let’s Encrypt (sur la VM, depuis la racine du projet) :
-#   docker compose --profile proxy up -d
+# Certificat Let's Encrypt (sur la VM) :
 #   sudo certbot certonly --webroot -w "$(pwd)/certbot-webroot" \
 #     -d martintarot.com -d www.martintarot.com
-# (nginx sert ./certbot-webroot monté dans le conteneur sous /var/www/certbot)
-#
-# Ne pas activer local et proxy en même temps.
-
-x-db-base: &db-base
-  image: postgres:15-alpine
-  restart: ${RESTART_POLICY:-no}
-  environment:
-    POSTGRES_USER: ${POSTGRES_USER}
-    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    POSTGRES_DB: ${POSTGRES_DB}
-  volumes:
-    - pgdata:/var/lib/postgresql/data
-  healthcheck:
-    test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-    interval: 10s
-    timeout: 5s
-    retries: 5
-    start_period: 10s
-  networks:
-    - back-network
-
-x-web-base: &web-base
-  build: .
-  image: website
-  restart: ${RESTART_POLICY:-no}
-  networks:
-    - back-network
 
 services:
   db:
-    <<: *db-base
-    profiles: [proxy]
-
-  db_local:
-    <<: *db-base
-    profiles: [local]
+    image: postgres:15-alpine
+    restart: ${RESTART_POLICY:-no}
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
     ports:
       - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   web:
-    <<: *web-base
-    profiles: [proxy]
+    build: .
+    restart: ${RESTART_POLICY:-no}
     environment:
       ADMIN_TOKEN: ${ADMIN_TOKEN}
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8000}:8000"
     depends_on:
       db:
         condition: service_healthy
     healthcheck:
-      test:
-        [
-          "CMD",
-          "python",
-          "-c",
-          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/')",
-        ]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/')"]
       interval: 5s
       timeout: 5s
       retries: 5
       start_period: 25s
-
-  web_local:
-    <<: *web-base
-    profiles: [local]
-    ports:
-      - "127.0.0.1:${WEB_PORT:-8000}:8000"
-    environment:
-      ADMIN_TOKEN: ${ADMIN_TOKEN}
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db_local:5432/${POSTGRES_DB}
-    depends_on:
-      db_local:
-        condition: service_healthy
 
   nginx:
     image: nginx:alpine
@@ -100,12 +55,6 @@ services:
     depends_on:
       web:
         condition: service_healthy
-    networks:
-      - back-network
 
 volumes:
   pgdata:
-
-networks:
-  back-network:
-    driver: bridge
