@@ -9,6 +9,12 @@
 #   RESTART_POLICY=always   (recommandé)
 #   → services web + db (pas de ports exposés sur l’hôte) + nginx sur 80/443
 #
+# Certificat Let’s Encrypt (sur la VM, depuis la racine du projet) :
+#   docker compose --profile proxy up -d
+#   sudo certbot certonly --webroot -w "$(pwd)/certbot-webroot" \
+#     -d martintarot.com -d www.martintarot.com
+# (nginx sert ./certbot-webroot monté dans le conteneur sous /var/www/certbot)
+#
 # Ne pas activer local et proxy en même temps.
 
 x-db-base: &db-base
@@ -78,6 +84,7 @@ services:
       - "${HTTPS_PORT:-443}:443"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certbot-webroot:/var/www/certbot:ro
     depends_on:
       - web
     networks:

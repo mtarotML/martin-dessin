@@ -1,4 +1,6 @@
 .env
+# Fichiers éphémères Certbot (le dossier certbot-webroot reste versionné)
+certbot-webroot/.well-known/
 .venv
 all_text_files_merged.txt
 merge_py_files.py
