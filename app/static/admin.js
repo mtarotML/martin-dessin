@@ -46,7 +46,7 @@ async function checkSession() {
   const res = await fetch("auth/me");
   const data = await res.json();
   if (!data.user || !data.user.is_admin) {
-    window.location.href = "/";
+    window.location.href = "./";
     return null;
   }
   if (adminEmailEl) adminEmailEl.textContent = data.user.email;
@@ -57,7 +57,7 @@ async function loadDrawings() {
   const res = await fetch("admin/drawings");
   if (!res.ok) {
     if (res.status === 401 || res.status === 403) {
-      window.location.href = "/";
+      window.location.href = "./";
     }
     return;
   }
@@ -97,7 +97,7 @@ async function loadUsers() {
   const res = await fetch("admin/users");
   if (!res.ok) {
     if (res.status === 401 || res.status === 403) {
-      window.location.href = "/";
+      window.location.href = "./";
     }
     return;
   }
@@ -231,7 +231,7 @@ async function loadContest() {
     const res = await fetch("admin/contest");
     if (!res.ok) {
       if (res.status === 401 || res.status === 403) {
-        window.location.href = "/";
+        window.location.href = "./";
       }
       return;
     }

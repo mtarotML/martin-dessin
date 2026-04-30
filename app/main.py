@@ -322,9 +322,9 @@ def auth_page():
 
 
 @app.get("/admin")
-def admin_page(user=Depends(optional_user)):
+def admin_page(request: Request, user=Depends(optional_user)):
     if not is_admin(user):
-        return RedirectResponse("/")
+        return RedirectResponse(f"{app_base_url(request)}/")
     return FileResponse(BASE_DIR / "static" / "admin.html")
 
 
