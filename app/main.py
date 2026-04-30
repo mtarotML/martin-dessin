@@ -238,8 +238,9 @@ def google_callback(request: Request, code: str | None = None, state: str | None
     except ValueError as exc:
         return JSONResponse({"error": str(exc)}, 400)
 
+    base = app_base_url(request)
     if user:
-        response = RedirectResponse("/")
+        response = RedirectResponse(f"{base}/")
         response.delete_cookie("oauth_state")
         create_session(user["id"], response)
         return response
@@ -249,7 +250,7 @@ def google_callback(request: Request, code: str | None = None, state: str | None
     except ValueError as exc:
         return JSONResponse({"error": str(exc)}, 400)
 
-    response = RedirectResponse("/")
+    response = RedirectResponse(f"{base}/")
     response.delete_cookie("oauth_state")
     response.set_cookie("google_signup_token", signup_token, httponly=True, samesite="lax", max_age=600)
     return response
