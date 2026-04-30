@@ -1,5 +1,4 @@
 let currentUser = null;
-let currentDrawingId = null;
 let currentContestId = null;
 let timerEndsAt = null;
 let timerTickHandle = null;
@@ -22,18 +21,11 @@ const winnersList = document.getElementById("winners-list");
 const winnersEmpty = document.getElementById("winners-empty");
 const modal = document.getElementById("detail-modal");
 const detailImage = document.getElementById("detail-image");
-const detailHeartCount = document.getElementById("detail-heart-count");
 const detailHeartNum = document.getElementById("detail-heart-num");
 const detailAuthor = document.getElementById("detail-author");
-const likeBtn = document.getElementById("like-btn");
-const likeLabel = document.getElementById("like-label");
-const commentsList = document.getElementById("comments-list");
-const commentForm = document.getElementById("comment-form");
-const commentInput = document.getElementById("comment-input");
 const usernameDisplay = document.getElementById("username-display");
 const loginBtn = document.getElementById("login-btn");
 const logoutBtn = document.getElementById("logout-btn");
-const commentSubmitBtn = commentForm.querySelector("button");
 const usernameModal = document.getElementById("username-modal");
 const usernameModalForm = document.getElementById("username-modal-form");
 const usernameModalInput = document.getElementById("username-modal-input");
@@ -74,12 +66,6 @@ function renderAuthControls() {
   usernameDisplay.textContent = isLoggedIn ? currentUser.username : "Invité";
   loginBtn.classList.toggle("hidden", isLoggedIn);
   logoutBtn.classList.toggle("hidden", !isLoggedIn);
-
-  commentInput.disabled = !isLoggedIn;
-  commentSubmitBtn.disabled = !isLoggedIn;
-  commentInput.placeholder = isLoggedIn
-    ? "Ajouter un commentaire..."
-    : "Connecte-toi avec Google pour commenter";
 }
 
 function openUsernameModal(email) {
@@ -412,17 +398,39 @@ function startContestPolling() {
   });
 }
 
+function buildHeartButton(d) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "heart-preview-badge";
+  if (d.user_liked) btn.classList.add("liked");
+  if (d.is_own) btn.classList.add("is-own");
+  btn.innerHTML =
+    `<i data-lucide="heart" class="heart-icon" aria-hidden="true"></i>` +
+    `<span class="heart-num">${d.heart_count || 0}</span>`;
+
+  if (d.is_own) {
+    btn.title = "Tu ne peux pas liker ton propre dessin";
+    btn.setAttribute("aria-label", "Tu ne peux pas liker ton propre dessin");
+  } else {
+    btn.title = d.user_liked ? "Retirer mon like" : "J'aime";
+    btn.setAttribute("aria-label", btn.title);
+  }
+
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (d.is_own) return;
+    toggleLike(d);
+  });
+  return btn;
+}
+
 function renderGallery(drawings) {
   gallery.innerHTML = "";
   drawings.forEach(d => {
     const card = document.createElement("div");
     card.className = "gallery-card" + (d.user_liked ? " user-liked" : "");
 
-    const heartBadge = document.createElement("span");
-    heartBadge.className = "heart-preview-badge";
-    heartBadge.innerHTML =
-      `<i data-lucide="heart" class="heart-icon" aria-hidden="true"></i>` +
-      `<span class="heart-num">${d.heart_count || 0}</span>`;
+    card.appendChild(buildHeartButton(d));
 
     const imgWrap = document.createElement("div");
     imgWrap.className = "gallery-image-wrap";
@@ -439,16 +447,11 @@ function renderGallery(drawings) {
     const authorSpan = document.createElement("span");
     authorSpan.className = "gallery-author";
     authorSpan.textContent = d.author || "anonyme";
-    const statsSpan = document.createElement("span");
-    statsSpan.className = "gallery-stats";
-    statsSpan.textContent = `${d.comment_count || 0} com.`;
     meta.appendChild(authorSpan);
-    meta.appendChild(statsSpan);
 
-    card.appendChild(heartBadge);
     card.appendChild(imgWrap);
     card.appendChild(meta);
-    card.onclick = () => openDetail(d.id);
+    card.onclick = () => openDetail(d);
     gallery.appendChild(card);
   });
   refreshLucide();
@@ -516,118 +519,46 @@ function renderLeaderboard(entries) {
   refreshLucide();
 }
 
-// ==================== Detail modal ====================
+// ==================== Detail modal (zoom only) ====================
 
-async function openDetail(drawingId) {
-  currentDrawingId = drawingId;
-  const res = await fetch(`drawings/${drawingId}`);
-  const data = await res.json();
-
-  detailImage.src = data.drawing.image;
-  detailHeartNum.textContent = data.heart_count || 0;
-  detailAuthor.textContent = `par ${data.drawing.author || "anonyme"}`;
-
-  renderLike(data.user_liked);
-  renderComments(data.comments);
-
+function openDetail(d) {
+  detailImage.src = d.image;
+  detailHeartNum.textContent = d.heart_count || 0;
+  detailAuthor.textContent = `par ${d.author || "anonyme"}`;
   modal.classList.remove("hidden");
+  refreshLucide();
 }
 
 function closeDetail() {
   modal.classList.add("hidden");
-  currentDrawingId = null;
-  loadGallery();
-  loadLeaderboard();
-  loadWinners();
 }
 
 document.getElementById("modal-close").onclick = closeDetail;
-document.querySelector(".modal-backdrop").onclick = closeDetail;
+document.querySelector("#detail-modal .modal-backdrop").onclick = closeDetail;
 
 // ==================== Reactions ====================
 
-function renderLike(userLiked) {
-  if (!currentUser) {
-    likeBtn.className = "like-btn";
-    likeLabel.textContent = "Google pour aimer";
-    likeBtn.dataset.liked = "false";
-    return;
-  }
-
-  likeBtn.className = "like-btn" + (userLiked ? " active" : "");
-  likeLabel.textContent = userLiked ? "Aimé" : "J'aime";
-  likeBtn.dataset.liked = userLiked ? "true" : "false";
-}
-
-async function toggleLike() {
-  if (!currentDrawingId) return;
+async function toggleLike(d) {
   if (!currentUser) {
     window.location.href = "auth/google/start";
     return;
   }
-  const userLiked = likeBtn.dataset.liked === "true";
+  if (d.is_own) return;
 
-  if (userLiked) {
-    await fetch(`drawings/${currentDrawingId}/reaction`, { method: "DELETE" });
-  } else {
-    await fetch(`drawings/${currentDrawingId}/reaction`, {
-      method: "POST",
-    });
+  const res = d.user_liked
+    ? await fetch(`drawings/${d.id}/reaction`, { method: "DELETE" })
+    : await fetch(`drawings/${d.id}/reaction`, { method: "POST" });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    if (data.error) alert(data.error);
+    return;
   }
 
-  const res = await fetch(`drawings/${currentDrawingId}`);
-  const data = await res.json();
-  detailHeartNum.textContent = data.heart_count || 0;
-  renderLike(data.user_liked);
   loadGallery();
   loadLeaderboard();
   loadWinners();
 }
-
-likeBtn.onclick = toggleLike;
-
-// ==================== Comments ====================
-
-function renderComments(comments) {
-  commentsList.innerHTML = "";
-  if (comments.length === 0) {
-    commentsList.innerHTML = "<p class='no-comments'>Aucun commentaire</p>";
-    return;
-  }
-  comments.forEach(c => {
-    const div = document.createElement("div");
-    div.className = "comment";
-    const strong = document.createElement("strong");
-    strong.textContent = c.username;
-    const span = document.createElement("span");
-    span.textContent = c.content;
-    div.appendChild(strong);
-    div.append(" ");
-    div.appendChild(span);
-    commentsList.appendChild(div);
-  });
-}
-
-commentForm.onsubmit = async (e) => {
-  e.preventDefault();
-  if (!currentUser) {
-    window.location.href = "auth/google/start";
-    return;
-  }
-  const content = commentInput.value.trim();
-  if (!content || !currentDrawingId) return;
-
-  await fetch(`drawings/${currentDrawingId}/comments`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ content }),
-  });
-  commentInput.value = "";
-
-  const res = await fetch(`drawings/${currentDrawingId}`);
-  const data = await res.json();
-  renderComments(data.comments);
-};
 
 // ==================== Init ====================
 

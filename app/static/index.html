@@ -156,7 +156,7 @@
   <!-- Detail modal -->
   <div id="detail-modal" class="modal hidden">
     <div class="modal-backdrop"></div>
-    <div class="modal-content">
+    <div class="modal-content modal-content-image">
       <button class="modal-close" id="modal-close" type="button" aria-label="Fermer">
         <i data-lucide="x" aria-hidden="true"></i>
       </button>
@@ -170,23 +170,6 @@
       </div>
 
       <p class="detail-author" id="detail-author"></p>
-
-      <button id="like-btn" class="like-btn btn-with-icon" type="button">
-        <i data-lucide="heart" aria-hidden="true"></i>
-        <span id="like-label">J'aime</span>
-      </button>
-
-      <div class="comments-section">
-        <h3>Commentaires</h3>
-        <div id="comments-list"></div>
-        <form id="comment-form">
-          <input type="text" id="comment-input" placeholder="Ajouter un commentaire..." maxlength="500" required>
-          <button type="submit" class="btn-with-icon">
-            <i data-lucide="corner-down-left" aria-hidden="true"></i>
-            <span>Envoyer</span>
-          </button>
-        </form>
-      </div>
     </div>
   </div>
 

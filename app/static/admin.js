@@ -140,7 +140,7 @@ function renderUsers(users) {
     btn.addEventListener("click", async () => {
       const id = btn.dataset.id;
       const username = btn.dataset.username;
-      if (!confirm(`Supprimer définitivement l'utilisateur « ${username} » ?\n\nSes commentaires et likes seront supprimés. Ses dessins seront conservés mais anonymisés.`)) {
+      if (!confirm(`Supprimer définitivement l'utilisateur « ${username} » ?\n\nSes likes seront supprimés. Ses dessins seront conservés mais anonymisés.`)) {
         return;
       }
       const res = await fetch(`admin/users/${id}`, { method: "DELETE" });

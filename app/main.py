@@ -358,18 +358,18 @@ def list_drawings(user=Depends(optional_user)):
                 SELECT d.id, d.image, d.created_at,
                        u.username AS author,
                        (SELECT COUNT(*) FROM reactions r WHERE r.drawing_id = d.id AND r.emoji = 'like') AS heart_count,
-                       (SELECT COUNT(*) FROM comments c WHERE c.drawing_id = d.id) AS comment_count,
                        EXISTS(
                            SELECT 1 FROM reactions r
                            WHERE r.drawing_id = d.id
                              AND r.user_id = %s
                              AND r.emoji = 'like'
-                       ) AS user_liked
+                       ) AS user_liked,
+                       (d.user_id IS NOT NULL AND d.user_id = %s) AS is_own
                 FROM drawings d
                 LEFT JOIN users u ON d.user_id = u.id
                 ORDER BY d.id DESC
                 """,
-                (user_id,),
+                (user_id, user_id),
             )
             rows = cur.fetchall()
     return {"drawings": rows}
@@ -510,7 +510,7 @@ def get_drawing(drawing_id: int, user=Depends(optional_user)):
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute("""
-                SELECT d.id, d.image, d.created_at, u.username AS author
+                SELECT d.id, d.image, d.created_at, d.user_id, u.username AS author
                 FROM drawings d LEFT JOIN users u ON d.user_id = u.id
                 WHERE d.id = %s
             """, (drawing_id,))
@@ -519,7 +519,6 @@ def get_drawing(drawing_id: int, user=Depends(optional_user)):
             if not drawing:
                 return JSONResponse({"error": "Dessin introuvable"}, 404)
 
-            # Heart count for this drawing
             cur.execute(
                 "SELECT COUNT(*) AS cnt FROM reactions WHERE drawing_id = %s AND emoji = 'like'",
                 (drawing_id,),
@@ -527,7 +526,6 @@ def get_drawing(drawing_id: int, user=Depends(optional_user)):
             heart_row = cur.fetchone()
             heart_count = int(heart_row["cnt"]) if heart_row else 0
 
-            # Current user's heart
             user_liked = False
             if user:
                 cur.execute(
@@ -536,19 +534,14 @@ def get_drawing(drawing_id: int, user=Depends(optional_user)):
                 )
                 user_liked = cur.fetchone() is not None
 
-            # Comments
-            cur.execute("""
-                SELECT c.id, c.content, c.created_at, u.username
-                FROM comments c JOIN users u ON c.user_id = u.id
-                WHERE c.drawing_id = %s ORDER BY c.created_at ASC
-            """, (drawing_id,))
-            comments = cur.fetchall()
+    is_own = bool(user and drawing["user_id"] is not None and drawing["user_id"] == user["id"])
+    drawing.pop("user_id", None)
 
     return {
         "drawing": drawing,
         "heart_count": heart_count,
         "user_liked": user_liked,
-        "comments": comments,
+        "is_own": is_own,
     }
 
 
@@ -558,6 +551,16 @@ def get_drawing(drawing_id: int, user=Depends(optional_user)):
 def add_reaction(drawing_id: int, user=Depends(current_user)):
     with get_connection() as conn:
         with conn.cursor() as cur:
+            cur.execute("SELECT user_id FROM drawings WHERE id = %s", (drawing_id,))
+            row = cur.fetchone()
+            if not row:
+                return JSONResponse({"error": "Dessin introuvable"}, 404)
+            if row["user_id"] is not None and row["user_id"] == user["id"]:
+                return JSONResponse(
+                    {"error": "Tu ne peux pas liker ton propre dessin."},
+                    403,
+                )
+
             cur.execute(
                 "DELETE FROM reactions WHERE user_id = %s AND emoji = 'like'",
                 (user["id"],),
@@ -581,38 +584,6 @@ def remove_reaction(drawing_id: int, user=Depends(current_user)):
             )
             conn.commit()
     return {"status": "ok"}
-
-
-# ===================== Comments =====================
-
-class CommentIn(BaseModel):
-    content: str = Field(min_length=1, max_length=500)
-
-
-@app.post("/drawings/{drawing_id}/comments")
-def add_comment(drawing_id: int, data: CommentIn, user=Depends(current_user)):
-    with get_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                "INSERT INTO comments (drawing_id, user_id, content) VALUES (%s, %s, %s) RETURNING id, content, created_at",
-                (drawing_id, user["id"], data.content.strip()),
-            )
-            comment = cur.fetchone()
-            conn.commit()
-    return {"comment": {**comment, "username": user["username"]}}
-
-
-@app.get("/drawings/{drawing_id}/comments")
-def list_comments(drawing_id: int):
-    with get_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute("""
-                SELECT c.id, c.content, c.created_at, u.username
-                FROM comments c JOIN users u ON c.user_id = u.id
-                WHERE c.drawing_id = %s ORDER BY c.created_at ASC
-            """, (drawing_id,))
-            rows = cur.fetchall()
-    return {"comments": rows}
 
 
 # ===================== Admin =====================

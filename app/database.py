@@ -79,15 +79,7 @@ def init_db():
                 )
             """)
 
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS comments (
-                    id SERIAL PRIMARY KEY,
-                    drawing_id INTEGER NOT NULL REFERENCES drawings(id) ON DELETE CASCADE,
-                    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                    content VARCHAR(500) NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
+            cur.execute("DROP TABLE IF EXISTS comments")
 
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS contests (
