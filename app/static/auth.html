@@ -11,41 +11,15 @@
   <div class="auth-page-header">
     <i data-lucide="pen-line" class="lucide-auth-logo" aria-hidden="true"></i>
     <h1>Martin dessin</h1>
-    <p class="auth-tagline">Connecte-toi pour dessiner et partager</p>
+    <p class="auth-tagline">Connecte-toi avec Google, ou continue comme invité.</p>
   </div>
 
   <div class="auth-container">
-    <div class="auth-tabs">
-      <button type="button" class="tab active btn-with-icon" id="tab-login">
-        <i data-lucide="log-in" aria-hidden="true"></i>
-        <span>Se connecter</span>
-      </button>
-      <button type="button" class="tab btn-with-icon" id="tab-register">
-        <i data-lucide="user-plus" aria-hidden="true"></i>
-        <span>Créer un compte</span>
-      </button>
-    </div>
-
-    <form id="login-form" class="auth-form">
-      <input type="text" name="username" placeholder="Nom d'utilisateur" required autocomplete="username">
-      <input type="password" name="password" placeholder="Mot de passe" required autocomplete="current-password">
-      <button type="submit" class="auth-submit btn-with-icon">
-        <i data-lucide="log-in" aria-hidden="true"></i>
-        <span>Connexion</span>
-      </button>
-      <p class="auth-error" id="login-error"></p>
-    </form>
-
-    <form id="register-form" class="auth-form hidden">
-      <input type="text" name="username" placeholder="Nom d'utilisateur" required autocomplete="username">
-      <input type="email" name="email" placeholder="Email" required autocomplete="email">
-      <input type="password" name="password" placeholder="Mot de passe (4 car. min)" required minlength="4" autocomplete="new-password">
-      <button type="submit" class="auth-submit btn-with-icon">
-        <i data-lucide="user-plus" aria-hidden="true"></i>
-        <span>Créer le compte</span>
-      </button>
-      <p class="auth-error" id="register-error"></p>
-    </form>
+    <a href="auth/google/start" class="google-auth-button btn-with-icon">
+      <i data-lucide="log-in" aria-hidden="true"></i>
+      <span>Continuer avec Google</span>
+    </a>
+    <a href="./" class="guest-link">Continuer en invité</a>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.469.0/dist/umd/lucide.min.js"></script>

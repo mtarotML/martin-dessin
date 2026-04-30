@@ -13,10 +13,14 @@
       <i data-lucide="pen-line" class="lucide-brand" aria-hidden="true"></i>
       <h1>Martin dessin</h1>
     </div>
-    <div class="user-info">
+    <div class="auth-controls">
       <i data-lucide="user-circle" class="lucide-user-avatar" aria-hidden="true"></i>
-      <span id="username-display"></span>
-      <button id="logout-btn" class="btn-small btn-with-icon" type="button">
+      <span id="username-display">Invité</span>
+      <a id="login-btn" class="btn-small btn-with-icon" href="auth/google/start">
+        <i data-lucide="log-in" aria-hidden="true"></i>
+        <span>Google</span>
+      </a>
+      <button id="logout-btn" class="btn-small btn-with-icon hidden" type="button">
         <i data-lucide="log-out" aria-hidden="true"></i>
         <span>Déconnexion</span>
       </button>
@@ -24,23 +28,45 @@
   </header>
 
   <div class="main-layout">
-    <aside class="top-liked" aria-label="Image la plus aimée">
-      <div class="top-liked-header">
-        <i data-lucide="trophy" class="top-liked-icon" aria-hidden="true"></i>
-        <h3>Plus aimé</h3>
+    <aside class="winners-aside" aria-label="Hall des vainqueurs">
+      <div class="winners-header">
+        <i data-lucide="trophy" class="winners-icon" aria-hidden="true"></i>
+        <h3>Hall des vainqueurs</h3>
       </div>
 
-      <div class="top-liked-image-frame">
-        <img id="top-liked-image" alt="Dessin le plus aimé" />
+      <div id="winners-featured" class="winners-featured hidden">
+        <div class="winners-featured-frame">
+          <img id="winners-featured-image" alt="Dernier dessin vainqueur" />
+          <span class="winners-featured-badge">Dernier gagnant</span>
+        </div>
+        <div class="winners-featured-meta">
+          <span id="winners-featured-author" class="winners-featured-author"></span>
+          <span class="winners-featured-stats">
+            <i data-lucide="heart" class="winners-featured-heart" aria-hidden="true"></i>
+            <span id="winners-featured-likes">0</span>
+            <span class="winners-dot">·</span>
+            <span id="winners-featured-date"></span>
+          </span>
+        </div>
       </div>
 
-      <div class="top-liked-meta">
-        <i data-lucide="heart" class="top-liked-like-icon" aria-hidden="true"></i>
-        <span id="top-liked-like-count">0</span>
-      </div>
+      <ol id="winners-list" class="winners-list"></ol>
+
+      <p id="winners-empty" class="winners-empty hidden">
+        Aucun concours terminé pour l'instant.
+      </p>
     </aside>
 
     <div class="main-left">
+      <div id="contest-banner" class="contest-banner hidden" aria-live="polite">
+        <span class="contest-banner-label">Fin du concours dans :</span>
+        <div id="contest-timer" class="contest-timer">
+          <div class="contest-time" data-ghost="88:88:88">
+            <span id="contest-time-text">00:00:00</span>
+          </div>
+        </div>
+      </div>
+
       <div class="canvas-top-row">
         <div class="canvas-tools">
           <div class="tool-colors">
@@ -88,6 +114,43 @@
 
       <ol id="leaderboard-list" class="leaderboard-list"></ol>
     </aside>
+  </div>
+
+  <!-- Choose-username popup -->
+  <div id="username-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="username-modal-title">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content modal-content-sm">
+      <div class="username-modal-header">
+        <i data-lucide="user-round-pen" class="username-modal-icon" aria-hidden="true"></i>
+        <h3 id="username-modal-title">Choisis ton pseudo</h3>
+      </div>
+      <p class="username-modal-hint">
+        Connecté en tant que <span id="username-modal-email"></span>.
+      </p>
+
+      <form id="username-modal-form" class="username-modal-form">
+        <input
+          type="text"
+          id="username-modal-input"
+          name="username"
+          placeholder="Pseudo (lettres, chiffres, _ et -)"
+          minlength="2"
+          maxlength="40"
+          required
+          autocomplete="username"
+        >
+        <p class="auth-error" id="username-modal-error"></p>
+        <div class="username-modal-actions">
+          <button type="button" id="username-modal-cancel" class="btn-small">
+            Annuler
+          </button>
+          <button type="submit" class="username-modal-submit btn-with-icon">
+            <i data-lucide="check" aria-hidden="true"></i>
+            <span>Continuer</span>
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <!-- Detail modal -->

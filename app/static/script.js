@@ -1,12 +1,25 @@
 let currentUser = null;
 let currentDrawingId = null;
+let currentContestId = null;
+let timerEndsAt = null;
+let timerTickHandle = null;
+let timerPollHandle = null;
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const gallery = document.getElementById("gallery");
 const leaderboardList = document.getElementById("leaderboard-list");
-const topLikedImage = document.getElementById("top-liked-image");
-const topLikedLikeCount = document.getElementById("top-liked-like-count");
+const contestBanner = document.getElementById("contest-banner");
+const timerContainer = document.getElementById("contest-timer");
+const timerTextEl = document.getElementById("contest-time-text");
+const timerTextWrap = timerTextEl.parentElement;
+const winnersFeatured = document.getElementById("winners-featured");
+const winnersFeaturedImage = document.getElementById("winners-featured-image");
+const winnersFeaturedAuthor = document.getElementById("winners-featured-author");
+const winnersFeaturedLikes = document.getElementById("winners-featured-likes");
+const winnersFeaturedDate = document.getElementById("winners-featured-date");
+const winnersList = document.getElementById("winners-list");
+const winnersEmpty = document.getElementById("winners-empty");
 const modal = document.getElementById("detail-modal");
 const detailImage = document.getElementById("detail-image");
 const detailHeartCount = document.getElementById("detail-heart-count");
@@ -17,6 +30,16 @@ const likeLabel = document.getElementById("like-label");
 const commentsList = document.getElementById("comments-list");
 const commentForm = document.getElementById("comment-form");
 const commentInput = document.getElementById("comment-input");
+const usernameDisplay = document.getElementById("username-display");
+const loginBtn = document.getElementById("login-btn");
+const logoutBtn = document.getElementById("logout-btn");
+const commentSubmitBtn = commentForm.querySelector("button");
+const usernameModal = document.getElementById("username-modal");
+const usernameModalForm = document.getElementById("username-modal-form");
+const usernameModalInput = document.getElementById("username-modal-input");
+const usernameModalError = document.getElementById("username-modal-error");
+const usernameModalEmail = document.getElementById("username-modal-email");
+const usernameModalCancel = document.getElementById("username-modal-cancel");
 
 let drawing = false;
 
@@ -44,22 +67,89 @@ function refreshLucide() {
   if (typeof lucide !== "undefined") lucide.createIcons();
 }
 
-// ==================== Auth gate ====================
+// ==================== Auth ====================
 
-async function checkAuth() {
-  const res = await fetch("auth/me");
-  const data = await res.json();
-  if (!data.user) {
-    window.location.href = "auth";
-    return;
-  }
-  currentUser = data.user;
-  document.getElementById("username-display").textContent = currentUser.username;
+function renderAuthControls() {
+  const isLoggedIn = Boolean(currentUser);
+  usernameDisplay.textContent = isLoggedIn ? currentUser.username : "Invité";
+  loginBtn.classList.toggle("hidden", isLoggedIn);
+  logoutBtn.classList.toggle("hidden", !isLoggedIn);
+
+  commentInput.disabled = !isLoggedIn;
+  commentSubmitBtn.disabled = !isLoggedIn;
+  commentInput.placeholder = isLoggedIn
+    ? "Ajouter un commentaire..."
+    : "Connecte-toi avec Google pour commenter";
 }
 
-document.getElementById("logout-btn").onclick = async () => {
+function openUsernameModal(email) {
+  usernameModalEmail.textContent = email || "";
+  usernameModalError.textContent = "";
+  usernameModalInput.value = "";
+  usernameModal.classList.remove("hidden");
+  setTimeout(() => usernameModalInput.focus(), 30);
+  refreshLucide();
+}
+
+function closeUsernameModal() {
+  usernameModal.classList.add("hidden");
+}
+
+async function checkAuth() {
+  let pending = null;
+  try {
+    const res = await fetch("auth/me");
+    const data = await res.json();
+    currentUser = data.user || null;
+    pending = data.pending_signup || null;
+  } catch {
+    currentUser = null;
+  }
+  renderAuthControls();
+
+  if (!currentUser && pending) {
+    openUsernameModal(pending.email);
+  } else {
+    closeUsernameModal();
+  }
+}
+
+logoutBtn.onclick = async () => {
   await fetch("auth/logout", { method: "POST" });
-  window.location.href = "auth";
+  currentUser = null;
+  renderAuthControls();
+  loadGallery();
+  loadLeaderboard();
+  loadWinners();
+};
+
+usernameModalForm.onsubmit = async (e) => {
+  e.preventDefault();
+  usernameModalError.textContent = "";
+  const username = usernameModalInput.value.trim();
+
+  const res = await fetch("auth/google/complete", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    usernameModalError.textContent = data.error || "Erreur";
+    return;
+  }
+
+  closeUsernameModal();
+  await checkAuth();
+  loadGallery();
+  loadLeaderboard();
+  loadWinners();
+};
+
+usernameModalCancel.onclick = async () => {
+  await fetch("auth/google/cancel", { method: "POST" });
+  closeUsernameModal();
+  await checkAuth();
 };
 
 // ==================== Canvas drawing ====================
@@ -126,16 +216,20 @@ document.getElementById("send").onclick = async () => {
     return;
   }
   const image = canvas.toDataURL("image/png");
-  await fetch("drawings", {
+  const res = await fetch("drawings", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ image }),
   });
+  if (!res.ok) {
+    alert("Impossible d'envoyer le dessin.");
+    return;
+  }
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.beginPath();
   loadGallery();
   loadLeaderboard();
-  loadTopLiked();
+  loadWinners();
 };
 
 // ==================== Gallery ====================
@@ -152,30 +246,177 @@ async function loadLeaderboard() {
   renderLeaderboard(data.leaderboard || []);
 }
 
-async function loadTopLiked() {
-  const res = await fetch("top-liked");
+async function loadWinners() {
+  const res = await fetch("contests/winners");
   const data = await res.json();
-  const top = data.top;
+  renderWinners(data.winners || []);
+}
 
-  if (!top) {
-    topLikedImage.removeAttribute("src");
-    topLikedImage.style.display = "none";
-    topLikedLikeCount.textContent = "0";
+function formatWinnerDate(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("fr-FR", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function renderWinners(winners) {
+  winnersList.innerHTML = "";
+
+  if (!winners.length) {
+    winnersFeatured.classList.add("hidden");
+    winnersEmpty.classList.remove("hidden");
     refreshLucide();
     return;
   }
 
-  topLikedImage.style.display = "block";
-  topLikedImage.src = top.image;
-  topLikedLikeCount.textContent = top.like_count || 0;
+  winnersEmpty.classList.add("hidden");
+
+  const [latest, ...rest] = winners;
+  winnersFeaturedImage.src = latest.image;
+  winnersFeaturedAuthor.textContent = `par ${latest.author || "anonyme"}`;
+  winnersFeaturedLikes.textContent = latest.like_count || 0;
+  winnersFeaturedDate.textContent = formatWinnerDate(latest.archived_at);
+  winnersFeatured.classList.remove("hidden");
+
+  rest.forEach((w) => {
+    const li = document.createElement("li");
+    li.className = "winners-row";
+
+    const img = document.createElement("img");
+    img.className = "winners-row-image";
+    img.src = w.image;
+    img.alt = `Vainqueur du ${formatWinnerDate(w.archived_at)}`;
+
+    const meta = document.createElement("div");
+    meta.className = "winners-row-meta";
+
+    const author = document.createElement("span");
+    author.className = "winners-row-author";
+    author.textContent = w.author || "anonyme";
+
+    const stats = document.createElement("span");
+    stats.className = "winners-row-stats";
+    stats.innerHTML =
+      `<i data-lucide="heart" class="winners-row-heart" aria-hidden="true"></i>` +
+      `<span>${w.like_count || 0}</span>` +
+      `<span class="winners-dot">·</span>` +
+      `<span>${formatWinnerDate(w.archived_at)}</span>`;
+
+    meta.appendChild(author);
+    meta.appendChild(stats);
+    li.appendChild(img);
+    li.appendChild(meta);
+    winnersList.appendChild(li);
+  });
+
   refreshLucide();
+}
+
+// ==================== Contest timer ====================
+
+function pad2(n) {
+  return n < 10 ? `0${n}` : `${n}`;
+}
+
+function stopTimerTick() {
+  if (timerTickHandle) {
+    clearInterval(timerTickHandle);
+    timerTickHandle = null;
+  }
+}
+
+function hideContestBanner() {
+  contestBanner.classList.add("hidden");
+  stopTimerTick();
+  timerEndsAt = null;
+}
+
+function renderTimer(secondsLeft) {
+  const total = Math.max(0, Math.floor(secondsLeft));
+  const days = Math.floor(total / 86400);
+  const hours = Math.floor((total % 86400) / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const seconds = total % 60;
+
+  const txt = days > 0
+    ? `${days}:${pad2(hours)}:${pad2(minutes)}:${pad2(seconds)}`
+    : `${pad2(hours)}:${pad2(minutes)}:${pad2(seconds)}`;
+  timerTextEl.textContent = txt;
+  timerTextWrap.dataset.ghost = txt.replace(/\d/g, "8");
+
+  timerContainer.classList.toggle("urgent", total > 0 && total <= 60);
+  timerContainer.classList.toggle("expired", total === 0);
+}
+
+function startTimerTick() {
+  stopTimerTick();
+  timerTickHandle = setInterval(() => {
+    if (!timerEndsAt) return;
+    const left = Math.max(0, Math.floor((timerEndsAt - Date.now()) / 1000));
+    renderTimer(left);
+    if (left <= 0) {
+      stopTimerTick();
+      onContestExpired();
+    }
+  }, 250);
+}
+
+async function onContestExpired() {
+  // Server finalises lazily on the next /contest hit, then we refresh the rest.
+  await loadContest();
+  await Promise.all([loadGallery(), loadLeaderboard(), loadWinners()]);
+}
+
+async function loadContest() {
+  try {
+    const res = await fetch("contest");
+    const data = await res.json();
+    const contest = data.contest;
+
+    if (!contest) {
+      currentContestId = null;
+      hideContestBanner();
+      return;
+    }
+
+    const newId = contest.id;
+    if (currentContestId !== null && currentContestId !== newId) {
+      // A new contest started while we were on the page → refresh everything.
+      await Promise.all([loadGallery(), loadLeaderboard(), loadWinners()]);
+    }
+    currentContestId = newId;
+
+    const parsed = Date.parse(contest.ends_at);
+    const fromIso = Number.isFinite(parsed) ? parsed : null;
+    const fromSecondsLeft = Date.now() + contest.seconds_left * 1000;
+    timerEndsAt = fromIso || fromSecondsLeft;
+
+    renderTimer(Math.max(0, Math.floor((timerEndsAt - Date.now()) / 1000)));
+    contestBanner.classList.remove("hidden");
+    startTimerTick();
+  } catch {
+    /* network hiccup, keep last state */
+  }
+}
+
+function startContestPolling() {
+  if (timerPollHandle) return;
+  // Light re-sync every 30s to handle clock drift / contest changes from the admin.
+  timerPollHandle = setInterval(loadContest, 30000);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) loadContest();
+  });
 }
 
 function renderGallery(drawings) {
   gallery.innerHTML = "";
   drawings.forEach(d => {
     const card = document.createElement("div");
-    card.className = "gallery-card";
+    card.className = "gallery-card" + (d.user_liked ? " user-liked" : "");
 
     const heartBadge = document.createElement("span");
     heartBadge.className = "heart-preview-badge";
@@ -297,7 +538,7 @@ function closeDetail() {
   currentDrawingId = null;
   loadGallery();
   loadLeaderboard();
-  loadTopLiked();
+  loadWinners();
 }
 
 document.getElementById("modal-close").onclick = closeDetail;
@@ -306,6 +547,13 @@ document.querySelector(".modal-backdrop").onclick = closeDetail;
 // ==================== Reactions ====================
 
 function renderLike(userLiked) {
+  if (!currentUser) {
+    likeBtn.className = "like-btn";
+    likeLabel.textContent = "Google pour aimer";
+    likeBtn.dataset.liked = "false";
+    return;
+  }
+
   likeBtn.className = "like-btn" + (userLiked ? " active" : "");
   likeLabel.textContent = userLiked ? "Aimé" : "J'aime";
   likeBtn.dataset.liked = userLiked ? "true" : "false";
@@ -313,6 +561,10 @@ function renderLike(userLiked) {
 
 async function toggleLike() {
   if (!currentDrawingId) return;
+  if (!currentUser) {
+    window.location.href = "auth/google/start";
+    return;
+  }
   const userLiked = likeBtn.dataset.liked === "true";
 
   if (userLiked) {
@@ -329,7 +581,7 @@ async function toggleLike() {
   renderLike(data.user_liked);
   loadGallery();
   loadLeaderboard();
-  loadTopLiked();
+  loadWinners();
 }
 
 likeBtn.onclick = toggleLike;
@@ -358,6 +610,10 @@ function renderComments(comments) {
 
 commentForm.onsubmit = async (e) => {
   e.preventDefault();
+  if (!currentUser) {
+    window.location.href = "auth/google/start";
+    return;
+  }
   const content = commentInput.value.trim();
   if (!content || !currentDrawingId) return;
 
@@ -378,5 +634,7 @@ commentForm.onsubmit = async (e) => {
 checkAuth().then(() => {
   loadGallery();
   loadLeaderboard();
-  loadTopLiked();
+  loadWinners();
+  loadContest();
+  startContestPolling();
 });

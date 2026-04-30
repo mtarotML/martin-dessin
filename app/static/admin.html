@@ -11,22 +11,97 @@
   <header class="admin-header">
     <div class="admin-header-title">
       <i data-lucide="shield" class="lucide-admin" aria-hidden="true"></i>
-      <h1>Admin – Bibliothèque</h1>
+      <h1>Admin</h1>
     </div>
+    <p class="admin-header-hint">
+      Connecté en tant que <span id="admin-email"></span>.
+      <a href="/" class="admin-back-link">← Retour au site</a>
+    </p>
   </header>
 
-  <div class="admin-toolbar">
-    <button id="delete" type="button" class="btn-with-icon btn-danger-outline">
-      <i data-lucide="trash-2" aria-hidden="true"></i>
-      <span>Supprimer sélection</span>
-    </button>
-    <button id="delete-all" type="button" class="btn-with-icon btn-danger">
-      <i data-lucide="trash" aria-hidden="true"></i>
-      <span>Tout supprimer</span>
-    </button>
-  </div>
+  <section class="admin-section">
+    <h2 class="admin-section-title">
+      <i data-lucide="timer" aria-hidden="true"></i>
+      Concours
+    </h2>
 
-  <div id="gallery" class="gallery admin-gallery"></div>
+    <div id="contest-status" class="contest-status">
+      <span class="contest-status-pill" id="contest-status-pill">Chargement…</span>
+      <span id="contest-status-detail" class="contest-status-detail"></span>
+    </div>
+
+    <form id="contest-start-form" class="contest-start-form">
+      <label class="contest-field">
+        <span>Durée</span>
+        <input type="number" id="contest-duration-value" min="1" step="1" value="10" required />
+      </label>
+      <label class="contest-field">
+        <span>Unité</span>
+        <select id="contest-duration-unit">
+          <option value="60">Minutes</option>
+          <option value="3600" selected>Heures</option>
+          <option value="86400">Jours</option>
+          <option value="1">Secondes</option>
+        </select>
+      </label>
+      <button type="submit" id="contest-start-btn" class="btn-with-icon btn-primary-solid">
+        <i data-lucide="play" aria-hidden="true"></i>
+        <span>Démarrer le concours</span>
+      </button>
+    </form>
+
+    <div class="contest-active-actions">
+      <button id="contest-close-btn" type="button" class="btn-with-icon btn-warning hidden">
+        <i data-lucide="flag" aria-hidden="true"></i>
+        <span>Clôturer maintenant</span>
+      </button>
+      <button id="contest-cancel-btn" type="button" class="btn-with-icon btn-danger-outline hidden">
+        <i data-lucide="x-octagon" aria-hidden="true"></i>
+        <span>Annuler (sans archiver)</span>
+      </button>
+    </div>
+
+    <p id="contest-error" class="admin-error"></p>
+  </section>
+
+  <section class="admin-section">
+    <h2 class="admin-section-title">
+      <i data-lucide="images" aria-hidden="true"></i>
+      Dessins
+    </h2>
+    <div class="admin-toolbar">
+      <button id="delete" type="button" class="btn-with-icon btn-danger-outline">
+        <i data-lucide="trash-2" aria-hidden="true"></i>
+        <span>Supprimer sélection</span>
+      </button>
+      <button id="delete-all" type="button" class="btn-with-icon btn-danger">
+        <i data-lucide="trash" aria-hidden="true"></i>
+        <span>Tout supprimer</span>
+      </button>
+    </div>
+    <div id="gallery" class="gallery admin-gallery"></div>
+  </section>
+
+  <section class="admin-section">
+    <h2 class="admin-section-title">
+      <i data-lucide="users" aria-hidden="true"></i>
+      Utilisateurs
+    </h2>
+    <div class="admin-users-wrap">
+      <table class="admin-users-table">
+        <thead>
+          <tr>
+            <th>Pseudo</th>
+            <th>Email</th>
+            <th>Dessins</th>
+            <th>Inscrit le</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="users-tbody"></tbody>
+      </table>
+    </div>
+  </section>
 
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.469.0/dist/umd/lucide.min.js"></script>
   <script src="static/admin.js"></script>

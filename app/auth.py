@@ -3,20 +3,27 @@ import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone
 
-from fastapi import Header, HTTPException, Response, Request
+from fastapi import HTTPException, Response, Request
 from dotenv import load_dotenv
 
 from .database import get_connection
 
 load_dotenv()
 
-ADMIN_TOKEN = os.getenv("ADMIN_TOKEN")
 SESSION_MAX_AGE_DAYS = 30
 
 
-def admin_auth(x_admin_token: str = Header(...)):
-    if x_admin_token != ADMIN_TOKEN:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+def admin_email() -> str:
+    return (os.getenv("ADMIN_EMAIL") or "").strip().lower()
+
+
+def is_admin(user: dict | None) -> bool:
+    if not user:
+        return False
+    configured = admin_email()
+    if not configured:
+        return False
+    return (user.get("email") or "").strip().lower() == configured
 
 
 # --------------- password helpers ---------------
@@ -103,3 +110,13 @@ def optional_user(request: Request):
                 (token,),
             )
             return cur.fetchone()
+
+
+def admin_auth(request: Request):
+    """Require the logged-in user's email to match ADMIN_EMAIL."""
+    if not admin_email():
+        raise HTTPException(status_code=403, detail="Admin non configuré")
+    user = current_user(request)
+    if not is_admin(user):
+        raise HTTPException(status_code=403, detail="Accès admin refusé")
+    return user

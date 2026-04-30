@@ -101,7 +101,7 @@ svg.lucide {
   white-space: nowrap;
 }
 
-.user-info {
+.auth-controls {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -109,6 +109,11 @@ svg.lucide {
 }
 
 #username-display { font-weight: 600; }
+
+.auth-controls a {
+  color: inherit;
+  text-decoration: none;
+}
 
 .btn-small {
   padding: 4px 12px;
@@ -119,6 +124,12 @@ svg.lucide {
   background: #fff;
 }
 .btn-small:hover { background: #eee; }
+
+button:disabled,
+input:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
 
 /* ==================== Canvas ==================== */
 
@@ -237,64 +248,262 @@ canvas {
   margin-bottom: 10px;
 }
 
-.top-liked {
+/* ==================== Winners aside ==================== */
+
+.winners-aside {
   width: 280px;
   background: #fff;
   border: 1px solid #e9e9e9;
   border-radius: 12px;
-  padding: 12px 12px 10px;
+  padding: 14px 12px 12px;
   position: sticky;
   top: 16px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
 }
 
-.top-liked-header {
+.winners-header {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
-.top-liked-header h3 {
-  font-size: 1.05rem;
+.winners-header h3 {
+  font-size: 1rem;
   margin: 0;
 }
 
-.top-liked-icon {
+.winners-icon {
   width: 1.15rem;
   height: 1.15rem;
   color: #d4af37;
 }
 
-.top-liked-image-frame {
+.winners-featured {
   display: flex;
-  justify-content: center;
-  margin-bottom: 10px;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px dashed #eee;
 }
 
-.top-liked-image-frame img {
+.winners-featured-frame {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.winners-featured-frame img {
   width: 180px;
   height: 180px;
   object-fit: cover;
   border: 3px solid #d4af37;
   border-radius: 14px;
   background: #fff;
+  box-shadow: 0 2px 14px rgba(212, 175, 55, 0.25);
 }
 
-.top-liked-meta {
+.winners-featured-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: #d4af37;
+  color: #fff;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.winners-featured-meta {
+  text-align: center;
+  font-size: 0.82rem;
+  color: #555;
   display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.winners-featured-author {
+  font-weight: 700;
+  color: #222;
+}
+
+.winners-featured-stats {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   color: #666;
-  font-size: 0.9rem;
-  font-weight: 600;
 }
 
-.top-liked-like-icon {
-  width: 1rem;
-  height: 1rem;
-  color: #4a90d9;
+.winners-featured-heart {
+  width: 0.85rem;
+  height: 0.85rem;
+  color: #d24b73;
+}
+
+.winners-dot {
+  color: #bbb;
+}
+
+.winners-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.winners-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed #f1f1f1;
+}
+
+.winners-row:last-child {
+  border-bottom: none;
+}
+
+.winners-row-image {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border: 2px solid #e3c87a;
+  border-radius: 8px;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.winners-row-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.78rem;
+  color: #666;
+  min-width: 0;
+}
+
+.winners-row-author {
+  font-weight: 700;
+  color: #222;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.winners-row-stats {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.winners-row-heart {
+  width: 0.78rem;
+  height: 0.78rem;
+  color: #d24b73;
+}
+
+.winners-empty {
+  color: #999;
+  font-style: italic;
+  font-size: 0.85rem;
+  text-align: center;
+  margin-top: 10px;
+}
+
+/* ==================== Contest banner / LCD timer ==================== */
+
+@font-face {
+  font-family: "DSEG7Classic";
+  src: url("https://cdn.jsdelivr.net/gh/keshikan/DSEG@v0.46/fonts/DSEG7-Classic/DSEG7Classic-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+.contest-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 14px auto 18px;
+}
+
+.contest-banner-label {
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  color: #555;
+  font-weight: 500;
+}
+
+.contest-timer {
+  display: inline-block;
+  background: #000;
+  border-radius: 8px;
+  padding: 10px 18px;
+  box-shadow:
+    inset 0 0 0 1px #1a1a1a,
+    inset 0 0 14px rgba(0, 0, 0, 0.9),
+    0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.contest-time {
+  position: relative;
+  display: inline-block;
+  font-family: "DSEG7Classic", "Courier New", monospace;
+  font-weight: 700;
+  font-size: 2.2rem;
+  letter-spacing: 0.05em;
+  color: #5cf6f6;
+  text-shadow: 0 0 6px rgba(92, 246, 246, 0.55);
+  line-height: 1;
+}
+
+/* Faint "888…" segments behind the live digits — classic LCD look. */
+.contest-time::before {
+  content: attr(data-ghost);
+  position: absolute;
+  inset: 0;
+  color: rgba(92, 246, 246, 0.13);
+  text-shadow: none;
+  pointer-events: none;
+}
+
+.contest-time > span {
+  position: relative;
+  z-index: 1;
+}
+
+.contest-timer.urgent .contest-time {
+  color: #ff6464;
+  text-shadow: 0 0 8px rgba(255, 80, 80, 0.65);
+}
+
+.contest-timer.urgent .contest-time::before {
+  color: rgba(255, 80, 80, 0.13);
+}
+
+.contest-timer.urgent .contest-time > span {
+  animation: lcd-blink 0.9s steps(1, end) infinite;
+}
+
+@keyframes lcd-blink {
+  50% { opacity: 0.35; }
+}
+
+.contest-timer.expired .contest-time {
+  color: rgba(92, 246, 246, 0.25);
+  text-shadow: none;
+  animation: none;
 }
 
 /* ==================== Leaderboard ==================== */
@@ -406,11 +615,12 @@ canvas {
     align-items: stretch;
   }
 
-  .top-liked,
+  .winners-aside,
   .leaderboard {
     width: 100%;
     position: relative;
     top: auto;
+    max-height: none;
   }
 
   .canvas-top-row { flex-direction: column; }
@@ -466,6 +676,19 @@ h2 { margin: 24px 0 12px; }
 .gallery-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.gallery-card.user-liked {
+  border-color: rgba(218, 50, 84, 0.55);
+  box-shadow:
+    0 0 0 2px rgba(218, 50, 84, 0.25),
+    0 0 22px 6px rgba(218, 50, 84, 0.5);
+}
+
+.gallery-card.user-liked:hover {
+  box-shadow:
+    0 0 0 2px rgba(218, 50, 84, 0.35),
+    0 0 26px 8px rgba(218, 50, 84, 0.6);
 }
 
 .gallery-card img {
@@ -679,6 +902,117 @@ h2 { margin: 24px 0 12px; }
   box-shadow: 0 2px 12px rgba(0,0,0,0.08);
 }
 
+.google-auth-button {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #ddd;
+  border-radius: 999px;
+  background: #fff;
+  color: #222;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.google-auth-button:hover {
+  background: #f4f7fb;
+}
+
+.guest-link {
+  display: inline-block;
+  margin-top: 16px;
+  color: #666;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.guest-link:hover {
+  color: #222;
+  text-decoration: underline;
+}
+
+/* ==================== Username popup ==================== */
+
+.modal-content-sm {
+  max-width: 360px;
+  padding: 22px 22px 20px;
+  text-align: center;
+}
+
+.username-modal-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.username-modal-header h3 {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.username-modal-icon {
+  width: 2.4rem;
+  height: 2.4rem;
+  color: #4a90d9;
+  background: #eaf2fb;
+  border-radius: 999px;
+  padding: 10px;
+}
+
+.username-modal-hint {
+  font-size: 0.85rem;
+  color: #666;
+  margin: 8px 0 16px;
+}
+
+.username-modal-hint span {
+  font-weight: 600;
+  color: #222;
+  word-break: break-all;
+}
+
+.username-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.username-modal-form input {
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  outline: none;
+  width: 100%;
+}
+
+.username-modal-form input:focus {
+  border-color: #4a90d9;
+}
+
+.username-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.username-modal-submit {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  background: #4a90d9;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.username-modal-submit:hover {
+  background: #3a7bc8;
+}
+
 .auth-tabs {
   display: flex;
   margin-bottom: 20px;
@@ -729,7 +1063,7 @@ h2 { margin: 24px 0 12px; }
 
 .hidden { display: none !important; }
 
-/* ==================== Admin (kept) ==================== */
+/* ==================== Admin ==================== */
 
 .admin-page-body {
   padding: 20px 10px 40px;
@@ -739,18 +1073,60 @@ h2 { margin: 24px 0 12px; }
 }
 
 .admin-header {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
 }
 
 .admin-header-title {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .admin-header-title h1 {
   font-size: 1.25rem;
+}
+
+.admin-header-hint {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.admin-header-hint span {
+  font-weight: 600;
+  color: #222;
+}
+
+.admin-back-link {
+  margin-left: 12px;
+  color: #4a90d9;
+  text-decoration: none;
+}
+
+.admin-back-link:hover {
+  text-decoration: underline;
+}
+
+.admin-section {
+  background: #fff;
+  border: 1px solid #e9e9e9;
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 1.25rem;
+}
+
+.admin-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  margin: 0 0 12px;
+}
+
+.admin-section-title svg {
+  width: 1.05rem;
+  height: 1.05rem;
+  color: #4a90d9;
 }
 
 .admin-toolbar {
@@ -762,6 +1138,172 @@ h2 { margin: 24px 0 12px; }
 
 .admin-gallery {
   justify-content: flex-start;
+}
+
+.admin-users-wrap {
+  overflow-x: auto;
+}
+
+.admin-users-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.admin-users-table th,
+.admin-users-table td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+  vertical-align: middle;
+}
+
+.admin-users-table th {
+  font-weight: 600;
+  color: #666;
+  background: #fafafa;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.admin-users-table tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-users-email {
+  color: #555;
+  word-break: break-all;
+}
+
+.admin-users-empty {
+  text-align: center;
+  color: #999;
+  font-style: italic;
+  padding: 16px 8px;
+}
+
+.admin-self-badge {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #eaf2fb;
+  color: #4a90d9;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.admin-delete-user {
+  white-space: nowrap;
+}
+
+/* Admin contest section */
+.contest-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.contest-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.contest-status-pill.is-idle {
+  background: #eee;
+  color: #777;
+}
+
+.contest-status-pill.is-running {
+  background: #ffe5e5;
+  color: #b32525;
+  box-shadow: inset 0 0 0 1px rgba(179, 37, 37, 0.18);
+}
+
+.contest-status-detail {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.contest-start-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.contest-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.78rem;
+  color: #555;
+}
+
+.contest-field input,
+.contest-field select {
+  padding: 7px 10px;
+  font-size: 0.9rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  outline: none;
+  background: #fff;
+}
+
+.contest-field input:focus,
+.contest-field select:focus {
+  border-color: #4a90d9;
+}
+
+.contest-field input {
+  width: 90px;
+}
+
+.contest-active-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.btn-primary-solid {
+  background: #4a90d9;
+  color: #fff;
+  border: 1px solid #3a7bc8;
+}
+
+.btn-primary-solid:hover {
+  background: #3a7bc8;
+}
+
+.btn-warning {
+  background: #f4a82c;
+  color: #fff;
+  border: 1px solid #d8911e;
+}
+
+.btn-warning:hover {
+  background: #d8911e;
+}
+
+.admin-error {
+  color: #c0392b;
+  font-size: 0.85rem;
+  margin-top: 6px;
+  min-height: 1.2em;
 }
 
 .btn-danger {
